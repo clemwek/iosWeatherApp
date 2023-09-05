@@ -73,7 +73,6 @@ class CurrentWeatherViewController: UIViewController {
         let largeConfig = UIImage.SymbolConfiguration(pointSize: 60, weight: .bold, scale: .large)
         let image = UIImage(systemName: "cloud.sun.circle.fill", withConfiguration: largeConfig)
         let imageView = UIImageView(image: image)
-        imageView.backgroundColor = .red
         return imageView
     }()
     
@@ -128,25 +127,30 @@ class CurrentWeatherViewController: UIViewController {
     }()
     
     @objc func handleAddPlaceButton() {
-        let alertController = UIAlertController(title: "Add City", message: "", preferredStyle: .alert)
-         alertController.addTextField { (textField : UITextField!) -> Void in
-             textField.placeholder = "City Name"
-         }
-         let saveAction = UIAlertAction(title: "Add", style: .default, handler: { alert -> Void in
-             let firstTextField = alertController.textFields![0] as UITextField
-             print("City Name: \(firstTextField.text)")
-            guard let cityname = firstTextField.text else { return }
-            self.loadData(city: cityname) // Calling the loadData function
-         })
-         let cancelAction = UIAlertAction(title: "Cancel", style: .destructive, handler: { (action : UIAlertAction!) -> Void in
-            print("Cancel")
-         })
+//        let alertController = UIAlertController(title: "Add City", message: "", preferredStyle: .alert)
+//         alertController.addTextField { (textField : UITextField!) -> Void in
+//             textField.placeholder = "City Name"
+//         }
+//         let saveAction = UIAlertAction(title: "Add", style: .default, handler: { alert -> Void in
+//             let firstTextField = alertController.textFields![0] as UITextField
+//             print("City Name: \(firstTextField.text)")
+//            guard let cityname = firstTextField.text else { return }
+//            self.loadData(city: cityname) // Calling the loadData function
+//         })
+//         let cancelAction = UIAlertAction(title: "Cancel", style: .destructive, handler: { (action : UIAlertAction!) -> Void in
+//            print("Cancel")
+//         })
+//
+//
+//         alertController.addAction(saveAction)
+//         alertController.addAction(cancelAction)
+//
+//         self.present(alertController, animated: true, completion: nil)
 
-
-         alertController.addAction(saveAction)
-         alertController.addAction(cancelAction)
-
-         self.present(alertController, animated: true, completion: nil)
+        let storyboard = UIStoryboard(name: "NewLocationViewStoryBoard", bundle: nil)
+        let vc = storyboard.instantiateViewController(withIdentifier: "NewLocationStoryboard")
+        self.navigationController?.pushViewController(vc, animated: true)
+//        self.present(vc, animated: true)
     }
     
     func loadData(city: String) {
