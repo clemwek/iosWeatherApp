@@ -10,7 +10,8 @@ import MapKit
 
 class NewLocationViewController: UIViewController {
 
-    var resultSearchController:UISearchController? = nil
+    var resultSearchController: UISearchController? = nil
+    var selectedLocationDelegate: HandleMapSearch? = nil
     
     let locationManager = CLLocationManager()
     let regionInMeters: Double = 10000
@@ -20,12 +21,16 @@ class NewLocationViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTappedLocation))
+        mapView.addGestureRecognizer(tapGesture)
+        
 //        locationManager.delegate = self
 //        locationManager.requestWhenInUseAuthorization()
 //        locationManager.desiredAccuracy = kCLLocationAccuracyBest
 //        locationManager.requestLocation()
         checkLocationServices()
         setLocationSearch()
+        
     }
     
     func setUpLocationManager() {
@@ -89,6 +94,19 @@ class NewLocationViewController: UIViewController {
         resultSearchController?.obscuresBackgroundDuringPresentation = true
         definesPresentationContext = true
         navigationItem.searchController = resultSearchController
+        
+        locationSearchTable.mapView = mapView
+        locationSearchTable.handleMapSearchDelegate = self
+    }
+    
+    @objc func handleTappedLocation(gestureReconizer: UITapGestureRecognizer) {
+        
+        let location = gestureReconizer.location(in: mapView)
+        let coordinate = mapView.convert(location, toCoordinateFrom: mapView)
+        let placemark = MKPlacemark(coordinate: coordinate)
+        
+        selectedLocationDelegate?.getSelectedLocation(placemark: placemark)
+        self.navigationController?.popViewController(animated: true)
     }
 }
 
@@ -111,6 +129,12 @@ extension NewLocationViewController: CLLocationManagerDelegate {
 
 extension NewLocationViewController: UISearchBarDelegate {
     func updateSearchResults(for searchController: UISearchController) {
-        print("we are getting here")
+    }
+}
+
+extension NewLocationViewController: HandleMapSearch {
+    func getSelectedLocation(placemark: MKPlacemark) {
+        selectedLocationDelegate?.getSelectedLocation(placemark: placemark)
+        self.navigationController?.popViewController(animated: true)
     }
 }
