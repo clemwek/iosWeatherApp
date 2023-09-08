@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		246B27E32AAB0EBA002F5671 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 246B27E22AAB0EBA002F5671 /* LocationManager.swift */; };
 		24963BD12A9DBA75007EF282 /* Weather.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24963BD02A9DBA75007EF282 /* Weather.swift */; };
 		24963BD32A9DBB02007EF282 /* Main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24963BD22A9DBB02007EF282 /* Main.swift */; };
 		24963BD72A9DBC38007EF282 /* WeatherModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24963BD62A9DBC38007EF282 /* WeatherModel.swift */; };
@@ -51,7 +50,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		246B27E22AAB0EBA002F5671 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		24963BD02A9DBA75007EF282 /* Weather.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Weather.swift; sourceTree = "<group>"; };
 		24963BD22A9DBB02007EF282 /* Main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Main.swift; sourceTree = "<group>"; };
 		24963BD62A9DBC38007EF282 /* WeatherModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherModel.swift; sourceTree = "<group>"; };
@@ -106,14 +104,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		246B27E12AAB0EA0002F5671 /* LocationManager */ = {
-			isa = PBXGroup;
-			children = (
-				246B27E22AAB0EBA002F5671 /* LocationManager.swift */,
-			);
-			path = LocationManager;
-			sourceTree = "<group>";
-		};
 		24963BCF2A9DBA5B007EF282 /* Models */ = {
 			isa = PBXGroup;
 			children = (
@@ -194,7 +184,6 @@
 		24E8EC622A9A304E0050A3B7 /* weatherApp */ = {
 			isa = PBXGroup;
 			children = (
-				246B27E12AAB0EA0002F5671 /* LocationManager */,
 				24CECE462AA0893E00388151 /* View */,
 				249692552A9F37E8000488AF /* Controllers */,
 				24963BDC2A9DFD6E007EF282 /* Extension */,
@@ -361,7 +350,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				24E8EC6E2A9A304E0050A3B7 /* weatherApp.xcdatamodeld in Sources */,
-				246B27E32AAB0EBA002F5671 /* LocationManager.swift in Sources */,
 				24E8EC682A9A304E0050A3B7 /* CurrentWeatherViewController.swift in Sources */,
 				24963BD32A9DBB02007EF282 /* Main.swift in Sources */,
 				24CECE452AA07C6800388151 /* NewLocationViewController.swift in Sources */,
