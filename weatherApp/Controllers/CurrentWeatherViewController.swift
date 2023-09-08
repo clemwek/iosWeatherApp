@@ -11,16 +11,64 @@ import MapKit
 class CurrentWeatherViewController: UIViewController {
     
     var viewModel: CurrentWeatherViewModel?
+    var selectedLocation: CLLocationCoordinate2D?
     let networkManager = WeatherNetworkManager()
+    
+    let locationManager = CLLocationManager()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         viewModel = CurrentWeatherViewModel()
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Add", style: .plain, target: self, action: #selector(handleAddPlaceButton))
         
         setup()
         layout()
-        loadData(city: "nairobi")
+        checkLocationServices()
+    }
+
+    func setUpLocationManager() {
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+    }
+    
+    func getLocationWeather() {
+        if let location = locationManager.location {
+            selectedLocation = location.coordinate
+            loadData(coordinates: location.coordinate)
+        }
+    }
+    
+    func getSelectedLocationWeather(location: CLLocationCoordinate2D) {
+        loadData(coordinates: location)
+    }
+    
+    func checkLocationAuth() {
+        switch CLLocationManager.authorizationStatus() {
+        case .authorizedWhenInUse:
+            getLocationWeather()
+            break
+        case .denied:
+            //Show an alert to allow
+            break
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+            break
+        case .restricted:
+            // Show alert
+            break
+        case .authorizedAlways:
+            break
+        }
+    }
+    
+    func checkLocationServices() {
+        if CLLocationManager.locationServicesEnabled() {
+            setUpLocationManager()
+            checkLocationAuth()
+        } else {
+            // Show error
+        }
     }
     
     let containerView: UIView = {
@@ -131,10 +179,12 @@ class CurrentWeatherViewController: UIViewController {
         let storyboard = UIStoryboard(name: "NewLocationViewStoryBoard", bundle: nil)
         let vc = storyboard.instantiateViewController(withIdentifier: "NewLocationStoryboard") as! NewLocationViewController
         vc.selectedLocationDelegate = self
+        vc.selectedLocation = selectedLocation
         self.navigationController?.pushViewController(vc, animated: true)
     }
     
     func loadData(city: String) {
+        
         networkManager.fetchCurrentWeather(city: city) { (weather) in
              let formatter = DateFormatter()
              formatter.dateFormat = "dd MMM yyyy" //yyyy
@@ -148,7 +198,25 @@ class CurrentWeatherViewController: UIViewController {
                  self.minTemp.text = ("Min: " + String(weather.main.temp_min.kelvinToCelsiusConverter()) + "°C" )
                  self.maxTemp.text = ("Max: " + String(weather.main.temp_max.kelvinToCelsiusConverter()) + "°C" )
                  self.currentWeatherImage.loadImageFromURL(url: "https://openweathermap.org/img/wn/\(weather.weather[0].icon)@2x.png")
-//                 UserDefaults.standard.set("\(weather.name ?? "")", forKey: "SelectedCity")
+             }
+        }
+    }
+    
+    func loadData(coordinates: CLLocationCoordinate2D) {
+        
+        networkManager.fetchCurrentLocationWeather(lat: "\(coordinates.latitude)", lon: "\(coordinates.longitude)") { (weather) in
+             let formatter = DateFormatter()
+             formatter.dateFormat = "dd MMM yyyy" //yyyy
+             let stringDate = formatter.string(from: Date(timeIntervalSince1970: TimeInterval(weather.dt)))
+
+             DispatchQueue.main.async {
+                 self.currentTemperatureLabel.text = (String(weather.main.temp.kelvinToCelsiusConverter()) + "°C")
+                 self.currentLocation.text = "\(weather.name ) , \(weather.sys.country ?? "")"
+                 self.currentWeatherDescription.text = weather.weather[0].description
+                 self.currentDate.text = stringDate
+                 self.minTemp.text = ("Min: " + String(weather.main.temp_min.kelvinToCelsiusConverter()) + "°C" )
+                 self.maxTemp.text = ("Max: " + String(weather.main.temp_max.kelvinToCelsiusConverter()) + "°C" )
+                 self.currentWeatherImage.loadImageFromURL(url: "https://openweathermap.org/img/wn/\(weather.weather[0].icon)@2x.png")
              }
         }
     }
@@ -199,12 +267,6 @@ class CurrentWeatherViewController: UIViewController {
         currentTemperatureLabel.leadingAnchor.constraint(equalTo: currentWeatherImage.leadingAnchor, constant: 20).isActive = true
         currentTemperatureLabel.trailingAnchor.constraint(equalTo: tempDescriptionContainer.trailingAnchor, constant: -18).isActive = true
         
-        // TODO: sortout image posisioning.
-        
-//        currentWeatherImage.bottomAnchor.constraint(equalTo: tempDescriptionContainer.bottomAnchor, constant: 100).isActive = true
-//        currentWeatherDescription.leadingAnchor.constraint(equalTo: tempDescriptionContainer.leadingAnchor, constant: 20).isActive = true
-//        currentWeatherDescription.trailingAnchor.constraint(equalTo: tempDescriptionContainer.trailingAnchor, constant: -18).isActive = true
-        
         currentWeatherDescription.topAnchor.constraint(equalTo: currentTemperatureLabel.bottomAnchor).isActive = true
         currentWeatherDescription.leadingAnchor.constraint(equalTo: tempDescriptionContainer.leadingAnchor, constant: 20).isActive = true
         currentWeatherDescription.trailingAnchor.constraint(equalTo: tempDescriptionContainer.trailingAnchor, constant: -18).isActive = true
@@ -220,13 +282,24 @@ class CurrentWeatherViewController: UIViewController {
         minTemp.leadingAnchor.constraint(equalTo: minMaxTempContainer.leadingAnchor, constant: 20).isActive = true
         minTemp.trailingAnchor.constraint(equalTo: minMaxTempContainer.trailingAnchor, constant: -18).isActive = true
 
-    }
-    
+    }  
 }
 
 extension CurrentWeatherViewController: HandleMapSearch {
     func getSelectedLocation(placemark: MKPlacemark) {
-        print("==========>>>>>>: ", placemark)
+        selectedLocation = placemark.coordinate
+        getSelectedLocationWeather(location: placemark.coordinate)
+    }
+}
+
+extension CurrentWeatherViewController: CLLocationManagerDelegate {
+    private func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
+        checkLocationAuth()
+    }
+    
+    private func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        loadData(coordinates: location.coordinate )
     }
 }
 
