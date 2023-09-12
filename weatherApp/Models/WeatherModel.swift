@@ -9,7 +9,7 @@ struct WeatherModel: Codable {
     let weather: [Weather]
     let main: Main
     let sys: Sys
-    let name: String
+    let name: String?
     let dt: Int
     let timezone: Int?
     let dt_txt: String?

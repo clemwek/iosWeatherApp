@@ -6,16 +6,22 @@
 //
 
 import UIKit
+import SwiftUI
 import MapKit
 
 class CurrentWeatherViewController: UIViewController {
     
+    // MARK: Var properties
     var viewModel: CurrentWeatherViewModel?
     var selectedLocation: CLLocationCoordinate2D?
-    let networkManager = WeatherNetworkManager()
     
+    var forecastData = WeatherData()
+    
+    // MARK: Constants
+    let networkManager = WeatherNetworkManager()
     let locationManager = CLLocationManager()
     
+    // MARK: Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -23,43 +29,9 @@ class CurrentWeatherViewController: UIViewController {
         navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Add", style: .plain, target: self, action: #selector(handleAddPlaceButton))
         
         setup()
+        addWeekForecast()
         layout()
         checkLocationServices()
-    }
-
-    func setUpLocationManager() {
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-    }
-    
-    func getLocationWeather() {
-        if let location = locationManager.location {
-            selectedLocation = location.coordinate
-            loadData(coordinates: location.coordinate)
-        }
-    }
-    
-    func getSelectedLocationWeather(location: CLLocationCoordinate2D) {
-        loadData(coordinates: location)
-    }
-    
-    func checkLocationAuth() {
-        switch CLLocationManager.authorizationStatus() {
-        case .authorizedWhenInUse:
-            getLocationWeather()
-            break
-        case .denied:
-            //Show an alert to allow
-            break
-        case .notDetermined:
-            locationManager.requestWhenInUseAuthorization()
-            break
-        case .restricted:
-            // Show alert
-            break
-        case .authorizedAlways:
-            break
-        }
     }
     
     func checkLocationServices() {
@@ -113,9 +85,8 @@ class CurrentWeatherViewController: UIViewController {
     }()
     
     let imageContainer: UIView = {
-        let container = UIView()
-        container.backgroundColor = .lightGray
-        return container
+        let imageContainer = UIView()
+        return imageContainer
     }()
     
     let currentWeatherImage: UIImageView = {
@@ -151,8 +122,8 @@ class CurrentWeatherViewController: UIViewController {
     }()
     
     let minMaxTempContainer: UIView = {
-        let locationDateContainer = UIView()
-        return locationDateContainer
+        let minMaxTempContainer = UIView()
+        return minMaxTempContainer
     }()
     
     let minTemp: UILabel = {
@@ -175,6 +146,65 @@ class CurrentWeatherViewController: UIViewController {
         return label
     }()
     
+    let weekForecastContainer: UIView = {
+        let weekForecastContainer = UIView()
+        weekForecastContainer.backgroundColor = .lightGray
+        return weekForecastContainer
+    }()
+    
+    func addWeekForecast() {
+        guard let hostView = UIHostingController(rootView: WeekForecastSwiftUIView().environmentObject(forecastData)).view else { return }
+        hostView.translatesAutoresizingMaskIntoConstraints = false
+        
+        weekForecastContainer.addSubview(hostView)
+        
+        let constraints = [
+            hostView.topAnchor.constraint(equalTo: weekForecastContainer.topAnchor),
+            hostView.leadingAnchor.constraint(equalTo: weekForecastContainer.leadingAnchor),
+            hostView.bottomAnchor.constraint(equalTo: weekForecastContainer.bottomAnchor),
+            hostView.trailingAnchor.constraint(equalTo: weekForecastContainer.trailingAnchor),
+        ]
+        
+        weekForecastContainer.addConstraints(constraints)
+    }
+    
+    // MARK: Location setup
+    func setUpLocationManager() {
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+    }
+    
+    func getLocationWeather() {
+        if let location = locationManager.location {
+            selectedLocation = location.coordinate
+            loadData(coordinates: location.coordinate)
+            loadForecastData(coordinates: location.coordinate)
+        }
+    }
+    
+    func getSelectedLocationWeather(location: CLLocationCoordinate2D) {
+        loadData(coordinates: location)
+    }
+    
+    func checkLocationAuth() {
+        switch CLLocationManager.authorizationStatus() {
+        case .authorizedWhenInUse:
+            getLocationWeather()
+            break
+        case .denied:
+            //Show an alert to allow
+            break
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+            break
+        case .restricted:
+            // Show alert
+            break
+        case .authorizedAlways:
+            break
+        }
+    }
+    
     @objc func handleAddPlaceButton() {
         let storyboard = UIStoryboard(name: "NewLocationViewStoryBoard", bundle: nil)
         let vc = storyboard.instantiateViewController(withIdentifier: "NewLocationStoryboard") as! NewLocationViewController
@@ -183,8 +213,8 @@ class CurrentWeatherViewController: UIViewController {
         self.navigationController?.pushViewController(vc, animated: true)
     }
     
+    // MARK: Fetch data
     func loadData(city: String) {
-        
         networkManager.fetchCurrentWeather(city: city) { (weather) in
              let formatter = DateFormatter()
              formatter.dateFormat = "dd MMM yyyy" //yyyy
@@ -192,7 +222,7 @@ class CurrentWeatherViewController: UIViewController {
 
              DispatchQueue.main.async {
                  self.currentTemperatureLabel.text = (String(weather.main.temp.kelvinToCelsiusConverter()) + "°C")
-                 self.currentLocation.text = "\(weather.name ) , \(weather.sys.country ?? "")"
+                 self.currentLocation.text = "\(weather.name ?? "") , \(weather.sys.country ?? "")"
                  self.currentWeatherDescription.text = weather.weather[0].description
                  self.currentDate.text = stringDate
                  self.minTemp.text = ("Min: " + String(weather.main.temp_min.kelvinToCelsiusConverter()) + "°C" )
@@ -203,7 +233,6 @@ class CurrentWeatherViewController: UIViewController {
     }
     
     func loadData(coordinates: CLLocationCoordinate2D) {
-        
         networkManager.fetchCurrentLocationWeather(lat: "\(coordinates.latitude)", lon: "\(coordinates.longitude)") { (weather) in
              let formatter = DateFormatter()
              formatter.dateFormat = "dd MMM yyyy" //yyyy
@@ -211,13 +240,19 @@ class CurrentWeatherViewController: UIViewController {
 
              DispatchQueue.main.async {
                  self.currentTemperatureLabel.text = (String(weather.main.temp.kelvinToCelsiusConverter()) + "°C")
-                 self.currentLocation.text = "\(weather.name ) , \(weather.sys.country ?? "")"
+                 self.currentLocation.text = "\(weather.name ?? "") , \(weather.sys.country ?? "")"
                  self.currentWeatherDescription.text = weather.weather[0].description
                  self.currentDate.text = stringDate
                  self.minTemp.text = ("Min: " + String(weather.main.temp_min.kelvinToCelsiusConverter()) + "°C" )
                  self.maxTemp.text = ("Max: " + String(weather.main.temp_max.kelvinToCelsiusConverter()) + "°C" )
                  self.currentWeatherImage.loadImageFromURL(url: "https://openweathermap.org/img/wn/\(weather.weather[0].icon)@2x.png")
              }
+        }
+    }
+    
+    func loadForecastData(coordinates: CLLocationCoordinate2D) {
+        networkManager.fetchNextFiveWeatherForecast(lat: "\(coordinates.latitude)", lon: "\(coordinates.longitude)") { forecast in
+            self.forecastData.forecast = forecast
         }
     }
     
@@ -238,6 +273,9 @@ class CurrentWeatherViewController: UIViewController {
         currentStack.addArrangedSubview(minMaxTempContainer)
         minMaxTempContainer.addSubview(maxTemp)
         minMaxTempContainer.addSubview(minTemp)
+        
+        currentStack.addArrangedSubview(weekForecastContainer)
+        
     }
     
     func layout() {
@@ -245,6 +283,12 @@ class CurrentWeatherViewController: UIViewController {
         currentStack.leadingAnchor.constraint(equalTo: containerView.leadingAnchor).isActive = true
         currentStack.trailingAnchor.constraint(equalTo: containerView.trailingAnchor).isActive = true
         currentStack.bottomAnchor.constraint(equalTo: containerView.bottomAnchor).isActive = true
+        
+//        weekForecastContainer.topAnchor.constraint(equalTo: currentStack.bottomAnchor).isActive = true
+//        weekForecastContainer.bottomAnchor.constraint(equalTo: containerView.bottomAnchor).isActive = true
+//        weekForecastContainer.leadingAnchor.constraint(equalTo: containerView.leadingAnchor).isActive = true
+//        weekForecastContainer.trailingAnchor.constraint(equalTo: containerView.trailingAnchor).isActive = true
+//        weekForecastContainer.heightAnchor.constraint(equalToConstant: 300).isActive = true
         
         locationDateContainer.leadingAnchor.constraint(equalTo: currentStack.leadingAnchor).isActive = true
         locationDateContainer.trailingAnchor.constraint(equalTo: currentStack.trailingAnchor).isActive = true
@@ -286,6 +330,7 @@ class CurrentWeatherViewController: UIViewController {
 }
 
 extension CurrentWeatherViewController: HandleMapSearch {
+    
     func getSelectedLocation(placemark: MKPlacemark) {
         selectedLocation = placemark.coordinate
         getSelectedLocationWeather(location: placemark.coordinate)
@@ -293,13 +338,18 @@ extension CurrentWeatherViewController: HandleMapSearch {
 }
 
 extension CurrentWeatherViewController: CLLocationManagerDelegate {
-    private func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
-        checkLocationAuth()
-    }
     
     private func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         loadData(coordinates: location.coordinate )
     }
+    
+    private func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
+        checkLocationAuth()
+    }
+}
+
+class WeatherData: ObservableObject {
+    @Published var forecast: [ForecastTemperature] = []
 }
 
